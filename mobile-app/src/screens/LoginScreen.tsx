@@ -1,9 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { LinearGradient } from "expo-linear-gradient";
-import { LockKeyhole, UserRound } from "lucide-react-native";
 import { Controller, useForm } from "react-hook-form";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { z } from "zod";
 
 import { Alert } from "../components/ui/Alert";
@@ -11,7 +9,6 @@ import { Button } from "../components/ui/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
 import { Input } from "../components/ui/Input";
 import { Screen } from "../components/ui/Screen";
-import { API_BASE_URL } from "../constants/config";
 import { colors, radius, spacing } from "../constants/theme";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../utils/api-error";
@@ -34,7 +31,7 @@ export function LoginScreen() {
     formState: { errors },
   } = useForm<LoginForm>({
     defaultValues: {
-      cpf: "",
+      cpf: "529.982.247-25",
       senha: "",
     },
     resolver: zodResolver(loginSchema),
@@ -50,21 +47,18 @@ export function LoginScreen() {
 
   return (
     <Screen contentStyle={styles.content}>
-      <LinearGradient colors={["#12233f", "#09111f"]} style={styles.hero}>
-        <Text style={styles.eyebrow}>Automacao Predial IoT</Text>
-        <Text style={styles.title}>Controle blocos, salas e luzes sem improviso.</Text>
-        <Text style={styles.subtitle}>
-          O app esta apontando para {API_BASE_URL}. Se estiver em dispositivo fisico,
-          troque a URL antes de testar.
-        </Text>
-      </LinearGradient>
+      <View style={styles.hero}>
+        <Image source={require("../../assets/seta-logo-cropped.png")} style={styles.setaLogo} resizeMode="contain" />
+        <Text style={styles.heroSubtitle}>GRUPO DE PESQUISA</Text>
+      </View>
 
-      <Card>
+      <Card style={styles.loginCard}>
         <CardHeader>
-          <CardTitle>Entrar</CardTitle>
-          <CardDescription>
-            Use seu CPF e senha para acessar o ambiente autenticado.
-          </CardDescription>
+          <View style={styles.logoWrap}>
+            <Image source={require("../../assets/api-logo-white.png")} style={styles.apiLogo} resizeMode="contain" />
+          </View>
+          <CardTitle style={styles.cardTitle}>Entrar</CardTitle>
+          <CardDescription>Digite CPF e senha para continuar.</CardDescription>
         </CardHeader>
         <CardContent>
           {mutation.isError ? (
@@ -83,7 +77,9 @@ export function LoginScreen() {
                 label="CPF"
                 autoCapitalize="none"
                 autoCorrect={false}
-                keyboardType="number-pad"
+                inputMode="numeric"
+                keyboardType="numeric"
+                showSoftInputOnFocus
                 placeholder="000.000.000-00"
                 value={value}
                 error={errors.cpf?.message}
@@ -107,24 +103,21 @@ export function LoginScreen() {
             )}
           />
 
+          <View style={styles.actionsRow}>
+            <Pressable style={styles.remember}>
+              <View style={styles.checkbox} />
+              <Text style={styles.rememberText}>Salvar senha</Text>
+            </Pressable>
+            <Text style={styles.forgotText}>Esqueci minha senha</Text>
+          </View>
+
           <Button
-            title="Acessar painel"
+            title="Entrar"
             loading={mutation.isPending}
             onPress={handleSubmit((values) => mutation.mutate(values))}
           />
         </CardContent>
       </Card>
-
-      <View style={styles.hints}>
-        <View style={styles.hintItem}>
-          <UserRound color={colors.primary} size={18} />
-          <Text style={styles.hintText}>CPF mascarado na tela e sanitizado no payload.</Text>
-        </View>
-        <View style={styles.hintItem}>
-          <LockKeyhole color={colors.primary} size={18} />
-          <Text style={styles.hintText}>JWT salvo com `expo-secure-store`.</Text>
-        </View>
-      </View>
     </Screen>
   );
 }
@@ -133,39 +126,67 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: "center",
+    gap: spacing.xl,
+    maxWidth: 620,
+    alignSelf: "center",
+    width: "100%",
+    backgroundColor: "#d7d9de",
   },
   hero: {
-    borderRadius: radius.lg,
-    padding: spacing.xl,
     gap: spacing.sm,
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
   },
-  eyebrow: {
-    color: colors.primary,
+  setaLogo: {
+    width: 360,
+    height: 120,
+  },
+  heroSubtitle: {
+    color: "#111827",
+    fontSize: 16,
     fontWeight: "700",
     letterSpacing: 1,
-    textTransform: "uppercase",
-    fontSize: 12,
   },
-  title: {
-    color: colors.text,
-    fontSize: 28,
-    fontWeight: "800",
-    lineHeight: 34,
+  loginCard: {
+    borderRadius: radius.lg,
+    backgroundColor: "#1f2532",
+    borderColor: "#1f2532",
   },
-  subtitle: {
-    color: colors.mutedText,
-    lineHeight: 22,
+  logoWrap: {
+    alignItems: "center",
+    marginBottom: spacing.sm,
   },
-  hints: {
-    gap: spacing.sm,
+  apiLogo: {
+    width: 190,
+    height: 70,
   },
-  hintItem: {
+  cardTitle: {
+    textAlign: "center",
+  },
+  actionsRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.sm,
+    justifyContent: "space-between",
   },
-  hintText: {
-    color: colors.mutedText,
-    flex: 1,
+  remember: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  checkbox: {
+    width: 12,
+    height: 12,
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: "#94a3b8",
+    backgroundColor: "#e2e8f0",
+  },
+  rememberText: {
+    color: "#cbd5e1",
+    fontSize: 12,
+  },
+  forgotText: {
+    color: "#cbd5e1",
+    fontSize: 12,
   },
 });

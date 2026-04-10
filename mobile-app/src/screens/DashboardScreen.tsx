@@ -1,16 +1,12 @@
-import { ReactNode } from "react";
 import { useNavigation } from "@react-navigation/native";
-import { ArrowRight, Building2, Lightbulb, MapPinned } from "lucide-react-native";
 import { StyleSheet, Text, View } from "react-native";
 
-import { Button } from "../components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/Card";
-import { EmptyState } from "../components/ui/EmptyState";
 import { LoadingCard } from "../components/ui/LoadingCard";
 import { Screen } from "../components/ui/Screen";
-import { colors, radius, spacing } from "../constants/theme";
+import { colors, spacing } from "../constants/theme";
 import { useAuth } from "../context/AuthContext";
 import { useBlocos, useDashboardData } from "../hooks/useAppQueries";
+
 export function DashboardScreen() {
   const navigation = useNavigation<any>();
   const { user } = useAuth();
@@ -20,6 +16,12 @@ export function DashboardScreen() {
   const isLoading =
     blocosAtivos.isLoading || salas.isLoading || blocos.isLoading;
 
+  const salasByBloco = (blocos.data ?? []).map((bloco) => ({
+    blocoId: bloco.id,
+    blocoNome: bloco.nome,
+    salas: (salas.data ?? []).filter((sala) => sala.blocoId === bloco.id).slice(0, 4),
+  }));
+
   return (
     <Screen
       refreshing={isLoading}
@@ -28,146 +30,157 @@ export function DashboardScreen() {
         void blocosAtivos.refetch();
         void salas.refetch();
       }}
+      contentStyle={styles.container}
     >
-      <View style={styles.hero}>
-        <Text style={styles.overline}>Bem-vindo de volta</Text>
-        <Text style={styles.name}>{user?.nome ?? "Usuario"}</Text>
-        <Text style={styles.description}>
-          Acompanhe rapidamente a operacao dos blocos e entre no fluxo de controle.
-        </Text>
+      <View style={styles.header}>
+        <Text style={styles.pageTitle}>Home</Text>
+        <Text style={styles.userName}>{user?.nome ?? "Usuario"}</Text>
       </View>
+      <View style={styles.divider} />
 
       {isLoading ? (
         <LoadingCard label="Buscando indicadores do dashboard..." />
       ) : (
-        <View style={styles.statsGrid}>
-          <StatCard icon={<Building2 color={colors.primary} size={20} />} label="Blocos ativos" value={String(blocosAtivos.data?.length ?? 0)} />
-          <StatCard icon={<MapPinned color={colors.accent} size={20} />} label="Salas cadastradas" value={String(salas.data?.length ?? 0)} />
-          <StatCard icon={<Lightbulb color={colors.warning} size={20} />} label="Blocos totais" value={String(blocos.data?.length ?? 0)} />
-        </View>
-      )}
+        salasByBloco.map((entry) => (
+          <View key={entry.blocoId} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{entry.blocoNome}</Text>
+              <Text
+                style={styles.sectionAction}
+                onPress={() =>
+                  navigation.navigate("BlocoDetail", {
+                    blocoId: entry.blocoId,
+                    blocoNome: entry.blocoNome,
+                  })
+                }
+              >
+                mostrar tudo
+              </Text>
+            </View>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Atalhos do fluxo principal</CardTitle>
-          <CardDescription>
-            O app foi organizado para crescer sem acoplar tela, servico e estado.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button title="Explorar blocos" onPress={() => navigation.navigate("Blocos")} />
-          <Button title="Consultar uma luz por ID" variant="secondary" onPress={() => navigation.navigate("Luzes")} />
-        </CardContent>
-      </Card>
-
-      {!blocos.data?.length && !isLoading ? (
-        <EmptyState
-          title="Nenhum bloco encontrado"
-          description="Valide se a API tem dados cadastrados e se a base URL esta apontando para o backend correto."
-        />
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Blocos recentes</CardTitle>
-            <CardDescription>Toque para abrir o detalhe com salas e acoes rapidas.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {blocos.data?.slice(0, 3).map((bloco) => (
-              <View key={bloco.id} style={styles.listRow}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.listTitle}>{bloco.nome}</Text>
-                  <Text style={styles.listDescription}>
-                    {bloco.descricao || "Sem descricao cadastrada."}
-                  </Text>
-                </View>
-                <Button
-                  title="Abrir"
-                  variant="ghost"
-                  onPress={() =>
-                    navigation.navigate("BlocoDetail", {
-                      blocoId: bloco.id,
-                      blocoNome: bloco.nome,
-                    })
-                  }
-                />
+            {entry.salas.length ? (
+              <View style={styles.cardsGrid}>
+                {entry.salas.map((sala) => (
+                  <View key={sala.id} style={styles.roomCard}>
+                    <Text style={styles.roomName}>{sala.nome}</Text>
+                    <Text style={styles.roomMeta}>
+                      Lampadas: <Text style={statusColor("LIGADO")}>LIGADA</Text>
+                    </Text>
+                    <Text style={styles.roomMeta}>
+                      Ar-condicionado: <Text style={statusColor("LIGADO")}>LIGADO</Text>
+                    </Text>
+                    <Text style={styles.roomMeta}>
+                      Estado: <Text style={statusColor(sala.status)}>{normalizeStatus(sala.status)}</Text>
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </CardContent>
-        </Card>
+            ) : (
+              <Text style={styles.emptyText}>Sem salas para este bloco.</Text>
+            )}
+          </View>
+        ))
       )}
     </Screen>
   );
 }
 
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View style={styles.statCard}>
-      {icon}
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-    </View>
-  );
+function normalizeStatus(status: string) {
+  return status.replace("_", " ");
+}
+
+function statusColor(status: string) {
+  if (status === "LIGADO" || status === "LIVRE") {
+    return styles.green;
+  }
+  if (status === "OCUPADA") {
+    return styles.red;
+  }
+  if (status === "MANUTENCAO") {
+    return styles.yellow;
+  }
+  return styles.yellow;
 }
 
 const styles = StyleSheet.create({
-  hero: {
-    gap: spacing.sm,
+  container: {
+    backgroundColor: "#e6e7eb",
   },
-  overline: {
-    color: colors.primary,
-    textTransform: "uppercase",
-    fontSize: 12,
-    fontWeight: "700",
-    letterSpacing: 1,
+  header: {
+    gap: 4,
   },
-  name: {
-    color: colors.text,
-    fontSize: 30,
-    fontWeight: "800",
+  pageTitle: {
+    color: "#0f172a",
+    fontSize: 46,
+    fontWeight: "900",
   },
-  description: {
-    color: colors.mutedText,
-    lineHeight: 22,
-  },
-  statsGrid: {
-    gap: spacing.md,
-  },
-  statCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    gap: spacing.sm,
-  },
-  statValue: {
-    color: colors.text,
-    fontSize: 28,
-    fontWeight: "800",
-  },
-  statLabel: {
-    color: colors.mutedText,
-  },
-  listRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  listTitle: {
-    color: colors.text,
+  userName: {
+    color: "#334155",
     fontSize: 16,
     fontWeight: "700",
   },
-  listDescription: {
-    color: colors.mutedText,
-    lineHeight: 20,
+  divider: {
+    height: 5,
+    borderRadius: 999,
+    backgroundColor: "#2a3343",
+  },
+  section: {
+    gap: spacing.sm,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  sectionTitle: {
+    color: "#0f172a",
+    fontSize: 38,
+    fontWeight: "900",
+  },
+  sectionAction: {
+    color: "#64748b",
+    fontWeight: "700",
+    textDecorationLine: "underline",
+  },
+  cardsGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: spacing.sm,
+  },
+  roomCard: {
+    minWidth: "48%",
+    flexGrow: 1,
+    backgroundColor: "#2b3242",
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "#33b1e6",
+    padding: spacing.md,
+    gap: 6,
+  },
+  roomName: {
+    color: "#f8fafc",
+    fontSize: 16,
+    fontWeight: "800",
+  },
+  roomMeta: {
+    color: "#f8fafc",
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  emptyText: {
+    color: "#64748b",
+    fontSize: 14,
+  },
+  green: {
+    color: "#16c60c",
+    fontWeight: "800",
+  },
+  yellow: {
+    color: "#eab308",
+    fontWeight: "800",
+  },
+  red: {
+    color: "#ef4444",
+    fontWeight: "800",
   },
 });
