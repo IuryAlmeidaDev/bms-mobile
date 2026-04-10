@@ -1,0 +1,707 @@
+# shadcn/ui
+
+shadcn/ui is a collection of beautifully designed, accessible, and customizable React components built on top of Radix UI primitives and styled with Tailwind CSS. Unlike traditional component libraries, shadcn/ui takes a unique approach: components are added directly to your project as source code via the CLI, giving you full ownership and the ability to customize every aspect. The library supports React 19 with Tailwind CSS v4 and provides a rich ecosystem of UI components, blocks, and theming options.
+
+The project consists of the `shadcn` CLI package (version 4.1.2) for managing components, a comprehensive component registry with multiple visual styles (nova, vega, luma, etc.), and templates for popular frameworks including Next.js, Vite, React Router, TanStack Start, and Astro. Components follow consistent patterns using CSS variables for theming, making it easy to customize colors, typography, and spacing across your entire application while maintaining accessibility standards through proper ARIA attributes and keyboard navigation.
+
+## CLI Commands
+
+### Initialize a New Project
+
+The `init` command creates a new shadcn/ui project or initializes an existing project with the component system. It supports presets for quick configuration and templates for different frameworks.
+
+```bash
+# Create a new Next.js project with default preset
+npx shadcn@latest init --name my-app --preset base-nova
+
+# Create with specific template and preset code
+npx shadcn@latest init --name my-app --preset a2r6bw --template vite
+
+# Create a monorepo project
+npx shadcn@latest init --name my-app --preset base-nova --monorepo
+
+# Initialize existing project with defaults
+npx shadcn@latest init --defaults
+
+# Initialize with force overwrite and component reinstall
+npx shadcn@latest init --preset radix-nova --force --reinstall
+```
+
+### Add Components
+
+The `add` command installs components from the registry into your project. Components are copied as source files, allowing full customization.
+
+```bash
+# Add single component
+npx shadcn@latest add button
+
+# Add multiple components
+npx shadcn@latest add button card dialog form
+
+# Add from community registry
+npx shadcn@latest add @magicui/shimmer-button
+
+# Add all available components
+npx shadcn@latest add --all
+
+# Preview changes without writing files (dry-run)
+npx shadcn@latest add button --dry-run
+
+# Show diff for a specific file
+npx shadcn@latest add button --diff button.tsx
+
+# View file contents before installing
+npx shadcn@latest add button --view button.tsx
+```
+
+### Search Registries
+
+The `search` command performs fuzzy search across component registries to help you find components and blocks.
+
+```bash
+# Search shadcn registry for sidebar components
+npx shadcn@latest search @shadcn -q "sidebar"
+
+# Search community registry
+npx shadcn@latest search @tailark -q "stats"
+
+# List all items from a registry
+npx shadcn@latest search @shadcn
+
+# Search with pagination
+npx shadcn@latest search @shadcn -q "form" --limit 20 --offset 0
+```
+
+### Get Component Documentation
+
+The `docs` command outputs URLs for component documentation, examples, and API references.
+
+```bash
+# Get docs for single component
+npx shadcn@latest docs button
+
+# Get docs for multiple components
+npx shadcn@latest docs button dialog select form
+```
+
+### View Project Information
+
+The `info` command displays project configuration including framework detection, aliases, Tailwind version, and installed components.
+
+```bash
+# Display project info
+npx shadcn@latest info
+
+# Output as JSON for programmatic use
+npx shadcn@latest info --json
+```
+
+### Build Custom Registry
+
+The `build` command compiles a registry.json file into individual JSON files for distribution.
+
+```bash
+# Build registry with defaults
+npx shadcn@latest build
+
+# Build to custom output directory
+npx shadcn@latest build --output ./dist/registry
+```
+
+## Core Components
+
+### Button Component
+
+The Button component provides multiple variants (default, destructive, outline, secondary, ghost, link) and sizes (default, xs, sm, lg, icon variants). Icons use the `data-icon` attribute for proper spacing.
+
+```tsx
+import { Button } from "@/components/ui/button"
+import { SearchIcon, ArrowRightIcon } from "lucide-react"
+import { Spinner } from "@/components/ui/spinner"
+
+// Basic variants
+<Button>Default</Button>
+<Button variant="destructive">Delete</Button>
+<Button variant="outline">Outline</Button>
+<Button variant="secondary">Secondary</Button>
+<Button variant="ghost">Ghost</Button>
+<Button variant="link">Link</Button>
+
+// Sizes
+<Button size="xs">Extra Small</Button>
+<Button size="sm">Small</Button>
+<Button size="lg">Large</Button>
+<Button size="icon"><SearchIcon /></Button>
+
+// With icons (use data-icon attribute)
+<Button>
+  <SearchIcon data-icon="inline-start" />
+  Search
+</Button>
+
+<Button>
+  Next
+  <ArrowRightIcon data-icon="inline-end" />
+</Button>
+
+// Loading state (compose with Spinner)
+<Button disabled>
+  <Spinner data-icon="inline-start" />
+  Saving...
+</Button>
+
+// As child for custom elements
+<Button asChild>
+  <a href="/dashboard">Go to Dashboard</a>
+</Button>
+```
+
+### Dialog Component
+
+The Dialog component creates modal dialogs with proper accessibility. Always include DialogTitle (use `className="sr-only"` if visually hidden).
+
+```tsx
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field"
+
+function EditProfileDialog() {
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Edit Profile</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit Profile</DialogTitle>
+          <DialogDescription>
+            Make changes to your profile here. Click save when you're done.
+          </DialogDescription>
+        </DialogHeader>
+        <FieldGroup>
+          <Field>
+            <FieldLabel htmlFor="name">Name</FieldLabel>
+            <Input id="name" defaultValue="John Doe" />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="username">Username</FieldLabel>
+            <Input id="username" defaultValue="@johndoe" />
+          </Field>
+        </FieldGroup>
+        <DialogFooter>
+          <Button type="submit">Save changes</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+```
+
+### Card Component
+
+The Card component provides a structured layout with header, content, and footer sections. Use full composition with CardHeader, CardTitle, CardDescription, CardContent, and CardFooter.
+
+```tsx
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+
+function TeamCard() {
+  return (
+    <Card className="max-w-md">
+      <CardHeader>
+        <CardTitle>Team Members</CardTitle>
+        <CardDescription>Invite and manage your team members.</CardDescription>
+        <CardAction>
+          <Badge variant="secondary">Pro Plan</Badge>
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar>
+              <AvatarImage src="/avatar.png" />
+              <AvatarFallback>JD</AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-medium">John Doe</p>
+              <p className="text-sm text-muted-foreground">john@example.com</p>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+      <CardFooter>
+        <Button>Invite Member</Button>
+      </CardFooter>
+    </Card>
+  )
+}
+```
+
+### Form Fields
+
+Forms use FieldGroup and Field components for proper layout and accessibility. Never use raw div with space-y-* for form layout.
+
+```tsx
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldError } from "@/components/ui/field"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Button } from "@/components/ui/button"
+
+function ContactForm() {
+  return (
+    <form>
+      <FieldGroup>
+        <Field>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
+          <Input id="email" type="email" placeholder="john@example.com" />
+          <FieldDescription>We'll never share your email.</FieldDescription>
+        </Field>
+
+        <Field>
+          <FieldLabel htmlFor="message">Message</FieldLabel>
+          <Textarea id="message" placeholder="Your message..." />
+        </Field>
+
+        {/* Invalid field state */}
+        <Field data-invalid>
+          <FieldLabel htmlFor="phone">Phone</FieldLabel>
+          <Input id="phone" aria-invalid />
+          <FieldError>Please enter a valid phone number.</FieldError>
+        </Field>
+
+        {/* Disabled field state */}
+        <Field data-disabled>
+          <FieldLabel htmlFor="company">Company</FieldLabel>
+          <Input id="company" disabled defaultValue="Acme Inc." />
+        </Field>
+
+        {/* Horizontal layout for checkboxes */}
+        <Field orientation="horizontal">
+          <Checkbox id="terms" />
+          <FieldLabel htmlFor="terms" className="font-normal">
+            I agree to the terms and conditions
+          </FieldLabel>
+        </Field>
+
+        <Button type="submit">Send Message</Button>
+      </FieldGroup>
+    </form>
+  )
+}
+```
+
+### Select Component
+
+The Select component provides a dropdown with keyboard navigation. Always wrap SelectItems in SelectGroup.
+
+```tsx
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { Field, FieldLabel, FieldGroup } from "@/components/ui/field"
+
+function CountrySelect() {
+  return (
+    <FieldGroup>
+      <Field>
+        <FieldLabel>Country</FieldLabel>
+        <Select>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Select a country" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectLabel>North America</SelectLabel>
+              <SelectItem value="us">United States</SelectItem>
+              <SelectItem value="ca">Canada</SelectItem>
+              <SelectItem value="mx">Mexico</SelectItem>
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel>Europe</SelectLabel>
+              <SelectItem value="uk">United Kingdom</SelectItem>
+              <SelectItem value="fr">France</SelectItem>
+              <SelectItem value="de">Germany</SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+      </Field>
+    </FieldGroup>
+  )
+}
+```
+
+### InputGroup Component
+
+InputGroup combines inputs with addons like buttons, icons, or text. Use InputGroupInput instead of raw Input inside InputGroup.
+
+```tsx
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+  InputGroupTextarea,
+} from "@/components/ui/input-group"
+import { Button } from "@/components/ui/button"
+import { SearchIcon, AtSignIcon, DollarSignIcon } from "lucide-react"
+
+// Search input with button
+<InputGroup>
+  <InputGroupInput placeholder="Search..." />
+  <InputGroupAddon>
+    <Button size="icon">
+      <SearchIcon data-icon="inline-start" />
+    </Button>
+  </InputGroupAddon>
+</InputGroup>
+
+// Input with icon prefix
+<InputGroup>
+  <InputGroupAddon>
+    <AtSignIcon />
+  </InputGroupAddon>
+  <InputGroupInput placeholder="username" />
+</InputGroup>
+
+// Input with text prefix
+<InputGroup>
+  <InputGroupAddon>
+    <DollarSignIcon />
+  </InputGroupAddon>
+  <InputGroupInput type="number" placeholder="0.00" />
+  <InputGroupAddon>USD</InputGroupAddon>
+</InputGroup>
+```
+
+### Tabs Component
+
+The Tabs component organizes content into tabbed sections. TabsTrigger must be inside TabsList.
+
+```tsx
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+
+function SettingsTabs() {
+  return (
+    <Tabs defaultValue="account" className="w-full max-w-lg">
+      <TabsList>
+        <TabsTrigger value="account">Account</TabsTrigger>
+        <TabsTrigger value="password">Password</TabsTrigger>
+        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+      </TabsList>
+      <TabsContent value="account">
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Settings</CardTitle>
+            <CardDescription>Manage your account information.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Account settings form */}
+          </CardContent>
+        </Card>
+      </TabsContent>
+      <TabsContent value="password">
+        <Card>
+          <CardHeader>
+            <CardTitle>Change Password</CardTitle>
+            <CardDescription>Update your password here.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Password form */}
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  )
+}
+```
+
+### Alert and Toast
+
+Alert displays inline callouts while toast (via sonner) shows temporary notifications.
+
+```tsx
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { toast } from "sonner"
+import { AlertCircleIcon, CheckCircleIcon, InfoIcon } from "lucide-react"
+
+// Alert component for inline messages
+<Alert>
+  <InfoIcon />
+  <AlertTitle>Heads up!</AlertTitle>
+  <AlertDescription>
+    You can add components using the CLI.
+  </AlertDescription>
+</Alert>
+
+<Alert variant="destructive">
+  <AlertCircleIcon />
+  <AlertTitle>Error</AlertTitle>
+  <AlertDescription>
+    Your session has expired. Please log in again.
+  </AlertDescription>
+</Alert>
+
+// Toast notifications using sonner
+function handleSave() {
+  // Success toast
+  toast.success("Changes saved successfully!")
+
+  // Error toast
+  toast.error("Failed to save changes.")
+
+  // Toast with action
+  toast("File deleted.", {
+    action: {
+      label: "Undo",
+      onClick: () => restoreFile(),
+    },
+  })
+
+  // Promise toast for async operations
+  toast.promise(saveData(), {
+    loading: "Saving...",
+    success: "Data saved!",
+    error: "Could not save.",
+  })
+}
+```
+
+### ToggleGroup Component
+
+ToggleGroup provides a set of toggle buttons for selecting between options. Use instead of manually looping Button components with active state.
+
+```tsx
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+import { Field, FieldTitle } from "@/components/ui/field"
+import { BoldIcon, ItalicIcon, UnderlineIcon } from "lucide-react"
+
+// Single selection toggle group
+<ToggleGroup type="single" defaultValue="weekly" spacing={2}>
+  <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
+  <ToggleGroupItem value="weekly">Weekly</ToggleGroupItem>
+  <ToggleGroupItem value="monthly">Monthly</ToggleGroupItem>
+</ToggleGroup>
+
+// Multiple selection with icons
+<ToggleGroup type="multiple" spacing={2}>
+  <ToggleGroupItem value="bold" aria-label="Toggle bold">
+    <BoldIcon />
+  </ToggleGroupItem>
+  <ToggleGroupItem value="italic" aria-label="Toggle italic">
+    <ItalicIcon />
+  </ToggleGroupItem>
+  <ToggleGroupItem value="underline" aria-label="Toggle underline">
+    <UnderlineIcon />
+  </ToggleGroupItem>
+</ToggleGroup>
+
+// With Field for labeled toggle groups
+<Field orientation="horizontal">
+  <FieldTitle id="theme-label">Theme</FieldTitle>
+  <ToggleGroup aria-labelledby="theme-label" type="single" defaultValue="system">
+    <ToggleGroupItem value="light">Light</ToggleGroupItem>
+    <ToggleGroupItem value="dark">Dark</ToggleGroupItem>
+    <ToggleGroupItem value="system">System</ToggleGroupItem>
+  </ToggleGroup>
+</Field>
+```
+
+## Theming and Customization
+
+### CSS Variables
+
+shadcn/ui uses CSS variables for theming. Colors follow the `name` / `name-foreground` convention where base is for backgrounds and `-foreground` is for text.
+
+```css
+/* globals.css - Light mode */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.965 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.965 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.965 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --radius: 0.625rem;
+}
+
+/* Dark mode */
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --primary: oklch(0.985 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  /* ... other dark mode variables */
+}
+```
+
+### Adding Custom Colors
+
+Define custom CSS variables and register them with Tailwind for use in components.
+
+```css
+/* 1. Define in globals.css */
+:root {
+  --warning: oklch(0.84 0.16 84);
+  --warning-foreground: oklch(0.28 0.07 46);
+}
+.dark {
+  --warning: oklch(0.41 0.11 46);
+  --warning-foreground: oklch(0.99 0.02 95);
+}
+
+/* 2. Register with Tailwind v4 */
+@theme inline {
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+}
+```
+
+```tsx
+// 3. Use in components
+<div className="bg-warning text-warning-foreground rounded-md p-4">
+  Warning message
+</div>
+
+// Or add a new button variant in button.tsx
+const buttonVariants = cva("...", {
+  variants: {
+    variant: {
+      warning: "bg-warning text-warning-foreground hover:bg-warning/90",
+    },
+  },
+})
+```
+
+### Dark Mode Setup
+
+Use next-themes for class-based dark mode toggling in Next.js applications.
+
+```tsx
+// app/layout.tsx
+import { ThemeProvider } from "next-themes"
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+
+// components/mode-toggle.tsx
+import { useTheme } from "next-themes"
+import { Button } from "@/components/ui/button"
+import { MoonIcon, SunIcon } from "lucide-react"
+
+export function ModeToggle() {
+  const { setTheme, theme } = useTheme()
+
+  return (
+    <Button
+      variant="outline"
+      size="icon"
+      onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+    >
+      <SunIcon className="size-4 dark:hidden" />
+      <MoonIcon className="hidden size-4 dark:block" />
+      <span className="sr-only">Toggle theme</span>
+    </Button>
+  )
+}
+```
+
+## Styling Best Practices
+
+### Semantic Colors and Utility Classes
+
+Always use semantic color tokens instead of raw Tailwind colors. Use `cn()` for conditional classes.
+
+```tsx
+import { cn } from "@/lib/utils"
+
+// CORRECT: Semantic colors
+<div className="bg-primary text-primary-foreground">Primary</div>
+<div className="bg-muted text-muted-foreground">Muted</div>
+<div className="text-destructive">Error text</div>
+
+// WRONG: Raw colors
+<div className="bg-blue-500 text-white">Primary</div>
+
+// CORRECT: Use cn() for conditional classes
+<div className={cn(
+  "flex items-center rounded-md p-4",
+  isActive ? "bg-primary text-primary-foreground" : "bg-muted"
+)}>
+  Content
+</div>
+
+// WRONG: Manual ternary in className
+<div className={`flex items-center ${isActive ? "bg-primary" : "bg-muted"}`}>
+
+// CORRECT: gap-* for spacing
+<div className="flex flex-col gap-4">
+
+// WRONG: space-y-*
+<div className="space-y-4">
+
+// CORRECT: size-* for equal dimensions
+<Avatar className="size-10">
+
+// WRONG: w-* h-*
+<Avatar className="w-10 h-10">
+
+// CORRECT: truncate shorthand
+<p className="truncate">Long text...</p>
+
+// WRONG: expanded truncate
+<p className="overflow-hidden text-ellipsis whitespace-nowrap">
+```
+
+shadcn/ui is primarily used for building modern web applications with React, from small projects to large-scale enterprise applications. Common use cases include admin dashboards, SaaS products, marketing websites, e-commerce platforms, and developer tools. The component library excels in scenarios where teams need full control over their UI components while maintaining consistent design patterns and accessibility standards. The CLI-based approach makes it particularly suitable for teams that prefer owning their component code rather than depending on external library updates.
+
+Integration typically follows a pattern of initializing a project with `npx shadcn@latest init`, adding required components via `npx shadcn@latest add`, and then customizing the theme through CSS variables in the global stylesheet. Components work seamlessly with popular form libraries like React Hook Form and TanStack Form, state management solutions, and server-side rendering frameworks. The registry system also supports community components and custom component registries, enabling teams to share components across multiple projects while maintaining consistent theming through presets.
